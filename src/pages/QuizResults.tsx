@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import Confetti from 'react-confetti';
 import Navigation from "../components/Navigation";
 
 const ResultsContainer = styled.div`
@@ -55,54 +56,13 @@ const IllustrationContainer = styled.div`
 `;
 
 const CelebrationImage = styled.img`
-  width: 180px;
-  height: 180px;
+  width: 200px;
+  height: 200px;
   object-fit: contain;
 `;
 
-const CelebrationPlaceholder = styled.div`
-  width: 180px;
-  height: 180px;
-  background: linear-gradient(135deg, #51CBFF 0%, #469CC1 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: 0 8px 24px rgba(81, 203, 255, 0.3);
-`;
-
-const CelebrationIcon = styled.div`
-  font-size: 60px;
-  color: white;
-  position: relative;
-  
-  &::before {
-    content: "🎉";
-    position: absolute;
-    top: -20px;
-    left: -30px;
-    font-size: 30px;
-    animation: sparkle 2s infinite;
-  }
-  
-  &::after {
-    content: "✨";
-    position: absolute;
-    bottom: -20px;
-    right: -30px;
-    font-size: 25px;
-    animation: sparkle 2s infinite 0.5s;
-  }
-  
-  @keyframes sparkle {
-    0%, 100% { opacity: 0; transform: scale(0.8); }
-    50% { opacity: 1; transform: scale(1.2); }
-  }
-`;
-
 const ScoreSection = styled.div`
-  margin-bottom: 50px;
+  margin: 0 0 40px 0;
 `;
 
 const ScoreText = styled.h2`
@@ -124,7 +84,7 @@ const ButtonContainer = styled.div`
   justify-content: center;
 `;
 
-const ActionButton = styled.button<{ variant: 'primary' | 'secondary' }>`
+const ActionButton = styled(Link)<{ variant: 'primary' | 'secondary' }>`
   padding: 16px 32px;
   border: none;
   border-radius: 8px;
@@ -163,28 +123,57 @@ const ActionButton = styled.button<{ variant: 'primary' | 'secondary' }>`
   }
 `;
 
+
+
 interface QuizResultsProps {
   score?: number;
   totalQuestions?: number;
 }
 
 const QuizResults: React.FC<QuizResultsProps> = () => {
-  const navigate = useNavigate();
   const location = useLocation();
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [windowDimensions, setWindowDimensions] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight
+  });
   
   // Get score from location state or use default values
   const score = location.state?.score || 4; // Default to 4 out of 5 for demo
   const totalQuestions = location.state?.totalQuestions || 5;
+
+  // 색종이 애니메이션 시작
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowConfetti(true);
+    }, 500); // 0.5초 후에 색종이 시작
+    
+    // 3초 후에 색종이 종료
+    const hideTimer = setTimeout(() => {
+      setShowConfetti(false);
+    }, 3500);
+    
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(hideTimer);
+    };
+  }, []);
   
-  const handleViewResults = () => {
-    // TODO: Navigate to detailed results page
-    console.log('View detailed results');
-  };
+  // 창 크기 변경 감지
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowDimensions({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
-  const handleGoBack = () => {
-    // Navigate back to difficulty selection
-    navigate('/difficulty');
-  };
+
+
   
   const getScoreMessage = () => {
     const percentage = (score / totalQuestions) * 100;
@@ -200,24 +189,31 @@ const QuizResults: React.FC<QuizResultsProps> = () => {
   return (
     <ResultsContainer>
       <Navigation />
+      
+      {/* 색종이 애니메이션 */}
+      {showConfetti && (
+        <Confetti
+          width={windowDimensions.width}
+          height={windowDimensions.height}
+          numberOfPieces={100}
+          recycle={false}
+          colors={['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#51CBFF']}
+          gravity={0.3}
+          wind={0.01}
+          initialVelocityY={-10}
+          opacity={1}
+        />
+      )}
+      
       <ContentContainer>
         <MainTitle>훈련이 모두 완료되었습니다!</MainTitle>
         <SubTitle>{getScoreMessage()}</SubTitle>
         
         <IllustrationContainer>
           <CelebrationImage 
-            src="/img/celebration.png" 
+            src="/img/result.png" 
             alt="축하 이미지"
-            onError={(e) => {
-              // Hide the image and show placeholder if image fails to load
-              e.currentTarget.style.display = 'none';
-              const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
-              if (placeholder) placeholder.style.display = 'flex';
-            }}
           />
-          <CelebrationPlaceholder style={{ display: 'none' }}>
-            <CelebrationIcon>🏆</CelebrationIcon>
-          </CelebrationPlaceholder>
         </IllustrationContainer>
         
         <ScoreSection>
@@ -227,10 +223,10 @@ const QuizResults: React.FC<QuizResultsProps> = () => {
         </ScoreSection>
         
         <ButtonContainer>
-          <ActionButton variant="primary" onClick={handleViewResults}>
+          <ActionButton variant="primary" to="/review">
             결과 확인하기
           </ActionButton>
-          <ActionButton variant="secondary" onClick={handleGoBack}>
+          <ActionButton variant="secondary" to="/game" >
             돌아가기
           </ActionButton>
         </ButtonContainer>

@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import Navigation from "../components/Navigation";
+import axiosInstance from "../api/axiosInstance";
 
 const ViewerContainer = styled.div`
   height: 100vh;
@@ -282,108 +283,66 @@ const Viewer: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [activeConversion, setActiveConversion] =
-    useState<string>("가독성 향상");
+    useState<string | null>(null);
 
-  const extractTextFromImage = async (file: File): Promise<string> => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      const img = new Image();
+  useEffect(() => {
+    axiosInstance
+      .get("/viewer/readability")
+      .then((res) => setExtractedText(res.data.text))
+      .catch((err) => console.error("Text fetch error", err));
+  }, []);
 
-      img.onload = () => {
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx?.drawImage(img, 0, 0);
-
-        // 간단한 텍스트 추출 시뮬레이션 (실제로는 OCR 라이브러리 필요)
-        const imageData = ctx?.getImageData(0, 0, canvas.width, canvas.height);
-        if (imageData) {
-          // 실제 OCR 대신 시뮬레이션된 텍스트 반환
-          setTimeout(() => {
-            resolve(
-              "이미지에서 추출된 텍스트:\n\n이것은 이미지에서 추출된 텍스트입니다. 실제 구현에서는 Tesseract.js나 다른 OCR 라이브러리를 사용하여 정확한 텍스트를 추출할 수 있습니다."
-            );
-          }, 1000);
-        } else {
-          resolve("텍스트 추출에 실패했습니다.");
-        }
-      };
-
-      img.src = URL.createObjectURL(file);
-    });
-  };
-
-  const extractTextFromPDF = async (file: File): Promise<string> => {
-    return new Promise((resolve) => {
-      // PDF.js를 사용한 텍스트 추출 시뮬레이션
-      setTimeout(() => {
-        resolve(
-          "PDF에서 추출된 텍스트:\n\n이것은 PDF 문서에서 추출된 텍스트입니다. 실제 구현에서는 PDF.js 라이브러리를 사용하여 정확한 텍스트를 추출할 수 있습니다.\n\n문서의 내용이 여기에 표시됩니다."
-        );
-      }, 1500);
-    });
-  };
-
-  const handleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // 파일 확장자 확인
-      const fileExtension = file.name.toLowerCase().split(".").pop();
-      const allowedExtensions = ["jpg", "jpeg", "png", "pdf"];
-
-      if (fileExtension && allowedExtensions.includes(fileExtension)) {
-        setSelectedFile(file);
-        setIsUploading(true);
-        setUploadProgress(0);
-        setExtractedText("");
-
-        // 이미지 파일인 경우 미리보기 생성
-        if (["jpg", "jpeg", "png"].includes(fileExtension)) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            setFilePreview(e.target?.result as string);
-          };
-          reader.readAsDataURL(file);
-        }
-
-        // PDF 파일인 경우 URL 생성
-        if (fileExtension === "pdf") {
-          const url = URL.createObjectURL(file);
-          setPdfUrl(url);
-        }
-
-        // 시뮬레이션된 업로드 진행
-        const interval = setInterval(() => {
-          setUploadProgress((prev) => {
-            if (prev >= 100) {
-              clearInterval(interval);
-              setIsUploading(false);
-              return 100;
-            }
-            return prev + 5;
-          });
-        }, 100);
-
-        // 텍스트 추출
-        try {
-          let text = "";
-          if (["jpg", "jpeg", "png"].includes(fileExtension)) {
-            text = await extractTextFromImage(file);
-          } else if (fileExtension === "pdf") {
-            text = await extractTextFromPDF(file);
-          }
-          setExtractedText(text);
-        } catch (error) {
-          setExtractedText("텍스트 추출 중 오류가 발생했습니다.");
-        }
-      } else {
-        alert(
-          "지원하지 않는 파일 형식입니다. .jpg, .png, .pdf 파일만 업로드 가능합니다."
-        );
-      }
+  const handleFileProcess = async (file: File) => {
+    const ext = file.name.toLowerCase().split(".").pop();
+    const allowed = ["jpg", "jpeg", "png", "pdf"];
+    if (!ext || !allowed.includes(ext)) {
+      alert("지원하지 않는 파일 형식입니다. .jpg, .png, .pdf 파일만 가능합니다.");
+      return;
     }
+    setSelectedFile(file);
+    setUploadProgress(0);
+    setIsUploading(true);
+    setExtractedText("");
+
+    if (["jpg", "jpeg", "png"].includes(ext)) {
+      const reader = new FileReader();
+      reader.onload = (e) => setFilePreview(e.target?.result as string);
+      reader.readAsDataURL(file);
+    } else if (ext === "pdf") {
+      setPdfUrl(URL.createObjectURL(file));
+    }
+
+    const interval = setInterval(() => {
+      setUploadProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsUploading(false);
+          return 100;
+        }
+        return prev + 5;
+      });
+    }, 100);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileProcess(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileProcess(file);
+  };
+
+  const handleDropZoneClick = () => {
+    document.getElementById("fileInput")?.click();
   };
 
   const handleRemoveFile = () => {
@@ -395,82 +354,11 @@ const Viewer: React.FC = () => {
     setUploadProgress(0);
   };
 
-  const handleDropZoneClick = () => {
-    document.getElementById("fileInput")?.click();
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      const file = files[0];
-      const fileExtension = file.name.toLowerCase().split(".").pop();
-      const allowedExtensions = ["jpg", "jpeg", "png", "pdf"];
-
-      if (fileExtension && allowedExtensions.includes(fileExtension)) {
-        setSelectedFile(file);
-        setIsUploading(true);
-        setUploadProgress(0);
-        setExtractedText("");
-
-        // 이미지 파일인 경우 미리보기 생성
-        if (["jpg", "jpeg", "png"].includes(fileExtension)) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            setFilePreview(e.target?.result as string);
-          };
-          reader.readAsDataURL(file);
-        }
-
-        // PDF 파일인 경우 URL 생성
-        if (fileExtension === "pdf") {
-          const url = URL.createObjectURL(file);
-          setPdfUrl(url);
-        }
-
-        // 시뮬레이션된 업로드 진행
-        const interval = setInterval(() => {
-          setUploadProgress((prev) => {
-            if (prev >= 100) {
-              clearInterval(interval);
-              setIsUploading(false);
-              return 100;
-            }
-            return prev + 5;
-          });
-        }, 100);
-
-        // 텍스트 추출
-        try {
-          let text = "";
-          if (["jpg", "jpeg", "png"].includes(fileExtension)) {
-            text = await extractTextFromImage(file);
-          } else if (fileExtension === "pdf") {
-            text = await extractTextFromPDF(file);
-          }
-          setExtractedText(text);
-        } catch (error) {
-          setExtractedText("텍스트 추출 중 오류가 발생했습니다.");
-        }
-      } else {
-        alert(
-          "지원하지 않는 파일 형식입니다. .jpg, .png, .pdf 파일만 업로드 가능합니다."
-        );
-      }
-    }
-  };
-
   const isImageFile = (fileName: string) => {
     const extension = fileName.toLowerCase().split(".").pop();
     return ["jpg", "jpeg", "png"].includes(extension || "");
   };
+
 
   const conversionOptions = ["가독성 향상", "AI 요약", "쉬운 문장", "TTS 낭독"];
 

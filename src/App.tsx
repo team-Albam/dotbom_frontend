@@ -2,7 +2,6 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate,
 } from "react-router-dom";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import SettingsModal from "./components/SettingsModal";
@@ -14,6 +13,7 @@ import Game from "./pages/Game";
 import DifficultySelection from "./pages/DifficultySelection";
 import Quiz from "./pages/Quiz";
 import QuizResults from "./pages/QuizResults";
+import QuizReview from "./pages/QuizReview";
 
 function App() {
   return (
@@ -28,7 +28,7 @@ function App() {
           <Route path="/difficulty" element={<DifficultySelection />} />
           <Route path="/quiz/:difficulty" element={<Quiz />} />
           <Route path="/results" element={<QuizResults />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/review" element={<QuizReview />} />
         </Routes>
         <SettingsModal />
       </Router>

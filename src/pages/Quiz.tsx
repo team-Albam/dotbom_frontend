@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Navigation from "../components/Navigation";
+import { fetchQuestionsByDifficulty, type Difficulty, type QuizQuestion } from "../services/api";
 
 const QuizContainer = styled.div`
   min-height: 100vh;
@@ -156,55 +157,41 @@ const AnswerText = styled.span<{ selected: boolean }>`
 
 
 
-interface QuizQuestion {
-  id: number;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-}
 
-const quizQuestions: QuizQuestion[] = [
-    {
-      id: 1,
-      question: "기초 생ㄹ수ㄱ자 → ㄹ에 들어갈 받침은?",
-      options: ["ㅂ", "ㅁ"],
-      correctAnswer: 1
-    },
-    {
-      id: 2,
-      question: "임대주택 → '주'에 들어갈 받침은?",
-      options: ["ㅁ", "ㅂ"],
-      correctAnswer: 0
-    },
-    {
-      id: 3,
-      question: "후불금 → '후'에 들어갈 받침은?",
-      options: ["ㅂ", "ㅁ"],
-      correctAnswer: 0
-    },
-    {
-      id: 4,
-      question: "복지 서비스 → '복'의 받침은?",
-      options: ["ㅁ", "ㄱ"],
-      correctAnswer: 1
-    },
-    {
-      id: 5,
-      question: "납부 고지서 → '납'의 받침은?",
-      options: ["ㅂ", "ㅁ"],
-      correctAnswer: 0
-    }
-  ];
   
   
 
 const Quiz: React.FC = () => {
   const navigate = useNavigate();
+  const { difficulty } = useParams<{ difficulty: string }>();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [answers, setAnswers] = useState<(number | null)[]>(new Array(quizQuestions.length).fill(null));
-
+  const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
+  const [answers, setAnswers] = useState<(number | null)[]>([]);
   const [animationState, setAnimationState] = useState<'idle' | 'slideOut' | 'slideIn'>('idle');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Load questions based on difficulty
+  useEffect(() => {
+    const loadQuestions = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const difficultyLevel = (difficulty as Difficulty) || 'easy';
+        const questions = await fetchQuestionsByDifficulty(difficultyLevel);
+        setQuizQuestions(questions);
+        setAnswers(new Array(questions.length).fill(null));
+      } catch (err) {
+        console.error('Failed to load questions:', err);
+        setError(err instanceof Error ? err.message : '문제를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadQuestions();
+  }, [difficulty]);
 
   const handleAnswerSelect = (answerIndex: number) => {
     setSelectedAnswer(answerIndex);
@@ -237,7 +224,9 @@ const Quiz: React.FC = () => {
         navigate('/results', {
           state: {
             score: score,
-            totalQuestions: quizQuestions.length
+            totalQuestions: quizQuestions.length,
+            userAnswers: newAnswers,
+            difficulty: difficulty
           }
         });
       }
@@ -245,6 +234,59 @@ const Quiz: React.FC = () => {
   };
 
 
+
+  // Handle loading state
+  if (loading) {
+    return (
+      <QuizContainer>
+        <Navigation />
+        <ContentContainer>
+          <div>문제를 불러오는 중...</div>
+        </ContentContainer>
+      </QuizContainer>
+    );
+  }
+
+  // Handle error state
+  if (error) {
+    return (
+      <QuizContainer>
+        <Navigation />
+        <ContentContainer>
+          <div style={{ color: '#F44336', textAlign: 'center' }}>
+            <h3>오류가 발생했습니다</h3>
+            <p>{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              style={{
+                padding: '10px 20px',
+                backgroundColor: '#51CBFF',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                marginTop: '20px'
+              }}
+            >
+              다시 시도
+            </button>
+          </div>
+        </ContentContainer>
+      </QuizContainer>
+    );
+  }
+
+  // Don't render if questions aren't loaded yet
+  if (quizQuestions.length === 0) {
+    return (
+      <QuizContainer>
+        <Navigation />
+        <ContentContainer>
+          <div>문제를 불러오는 중...</div>
+        </ContentContainer>
+      </QuizContainer>
+    );
+  }
 
   const currentQuiz = quizQuestions[currentQuestion];
   const progress = ((currentQuestion + 1) / quizQuestions.length) * 100;
