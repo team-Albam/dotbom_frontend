@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../components/Navigation";
@@ -19,6 +19,7 @@ const GameContainer = styled.div`
   flex-direction: column;
   align-items: center;
   position: relative;
+  overflow: hidden;
 `;
 
 const GradientCircle = styled.div`
@@ -27,11 +28,11 @@ const GradientCircle = styled.div`
   left: 1395px;
   width: 926.58px;
   height: 926.58px;
-  background: linear-gradient(135deg, #A100FF 7%, #18F1EE 100%);
+  background: linear-gradient(135deg, #a100ff 7%, #18f1ee 100%);
   opacity: 0.4;
-  filter: blur(100px); // Figma의 layer blur 효과 반영
+  filter: blur(100px);
   border-radius: 50%;
-  z-index: 0; // 필요시 조정
+  z-index: 0;
 `;
 
 const GradientCircleLeft = styled.div`
@@ -42,17 +43,15 @@ const GradientCircleLeft = styled.div`
   height: 1184.52px;
   background: linear-gradient(
     135deg,
-    #FFE100 0%,
-    #FF1000 50%,
-    #F11BD0 100%
+    #ffe100 0%,
+    rgb(187, 101, 94) 50%,
+    rgb(220, 141, 208) 100%
   );
   opacity: 0.4;
   filter: blur(100px);
   border-radius: 50%;
   z-index: 0;
 `;
-
-
 
 const ContentContainer = styled.div`
   max-width: 800px;
@@ -73,7 +72,7 @@ const ProgressSection = styled.div`
 
 const ProgressLabel = styled.span`
   font-size: 16px;
-  color: #4A90E2;
+  color: #4a90e2;
   font-weight: bold;
 `;
 
@@ -81,7 +80,6 @@ const ProgressIndicator = styled.div`
   display: flex;
   gap: 8px;
 `;
-
 
 const LifeIcon = styled(FaSearch)<{ active?: boolean }>`
   color: ${(props) => (props.active ? "#4A90E2" : "#D1D5DB")};
@@ -114,7 +112,7 @@ const BookStack = styled.img`
 `;
 
 const StartButton = styled.button`
-  background: #00B2FF;
+  background: #00b2ff;
   margin-top: 40px;
   color: white;
   border: none;
@@ -137,11 +135,29 @@ const StartButton = styled.button`
   }
 `;
 
+const MAX_LIVES = 3;
+const LOCAL_STORAGE_KEY = "training_lives";
+
 const Game: React.FC = () => {
   const navigate = useNavigate();
+  const [lives, setLives] = useState<number>(MAX_LIVES);
+
+  useEffect(() => {
+    const storedLives = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (storedLives !== null) {
+      setLives(Number(storedLives));
+    }
+  }, []);
 
   const handleStartTraining = () => {
-    navigate('/difficulty');
+    if (lives > 0) {
+      const newLives = lives - 1;
+      setLives(newLives);
+      localStorage.setItem(LOCAL_STORAGE_KEY, newLives.toString());
+      navigate("/difficulty");
+    } else {
+      alert("기회가 모두 소진되었습니다. 광고를 시청해 기회를 회복하세요!");
+    }
   };
 
   return (
@@ -153,9 +169,9 @@ const Game: React.FC = () => {
         <ProgressSection>
           <ProgressLabel>훈련 기회</ProgressLabel>
           <ProgressIndicator>
-            <LifeIcon active />
-            <LifeIcon />
-            <LifeIcon />
+            {[...Array(MAX_LIVES)].map((_, index) => (
+              <LifeIcon key={index} active={index < lives} />
+            ))}
           </ProgressIndicator>
         </ProgressSection>
 
