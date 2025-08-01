@@ -235,25 +235,30 @@ const Quiz: React.FC = () => {
 
         setTimeout(() => setAnimationState("idle"), 300);
       } else {
-        const score = newAnswers.reduce((total, answer, index) => {
-          const correctIndex = quizQuestions[index].answer - 1;
+        const score = newAnswers.reduce((total: number, answer, index) => {
+          const question = quizQuestions[index];
+          if (!question || typeof question.answer !== 'number') return total;
+        
+          const correctIndex = question.answer - 1;
           return total + (answer === correctIndex ? 1 : 0);
         }, 0);
+        
+        
 
         navigate("/results", {
-  state: {
-    score,
-    totalQuestions: quizQuestions.length,
-    userAnswers: newAnswers,
-    quizQuestions: quizQuestions.map(q => ({
-      question: q.content, // ✅ 이게 핵심
-      correctAnswer: q.answer,
-      options: q.options
-    })),
-    difficulty,
-  },
-});
-
+          state: {
+            score,
+            totalQuestions: quizQuestions.length,
+            userAnswers: newAnswers,
+            quizQuestions: quizQuestions.map((q) => ({
+              question: q.content, // 문제 텍스트
+              correctAnswer: q.answer - 1, // 정답 인덱스 (0부터 시작)
+              options: q.options.map((opt) => opt.optionContent), // 보기 배열
+              explanation: q.explanation, // 해설
+            })),
+            difficulty,
+          },
+        });
       }
     }, 400);
   };

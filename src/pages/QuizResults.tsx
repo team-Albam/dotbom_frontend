@@ -225,12 +225,14 @@ const QuizResults: React.FC<QuizResultsProps> = () => {
         
         <ButtonContainer>
       <ActionButton
-        as="button"
-        variant="primary"
-        onClick={() => navigate("/review", { state: location.state })}
-      >
-        결과 확인하기
-      </ActionButton>
+  as="button"
+  to="/review"
+  variant="primary"
+  onClick={() => navigate("/review", { state: location.state })}
+>
+  결과 확인하기
+</ActionButton>
+
       <ActionButton variant="secondary" to="/game">
         돌아가기
       </ActionButton>

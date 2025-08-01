@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import Navigation from "../components/Navigation";
-import { type QuizQuestion } from "../types/quiz";
+import type { QuizQuestion } from "../data/questions";
 
 const ReviewContainer = styled.div`
   min-height: 100vh;
@@ -20,8 +20,8 @@ const ContentContainer = styled.div`
 `;
 
 const QuestionBox = styled.div`
-  width: 80%;
-  padding: 2rem;
+  width: 70%;
+  padding: 4rem;
   margin-bottom: 2rem;
   background-color: #fff;
   border-radius: 1rem;
@@ -30,24 +30,34 @@ const QuestionBox = styled.div`
 
 const AnswerSection = styled.div`
   display: flex;
-  flex-direction: column;
+  flex-direction: row;  /* 가로 방향 */
   gap: 1rem;
   width: 80%;
+  justify-content: center;  /* 가운데 정렬 */
+  flex-wrap: nowrap; /* 필요하면 nowrap 유지 */
 `;
 
 const AnswerCard = styled.div<{ isCorrect: boolean; isUserAnswer: boolean }>`
   background-color: ${({ isCorrect, isUserAnswer }) =>
     isCorrect ? "#d4edda" : isUserAnswer ? "#f8d7da" : "#f1f3f5"};
-  border-left: 6px solid
+  border: 2px solid
     ${({ isCorrect, isUserAnswer }) =>
       isCorrect ? "#28a745" : isUserAnswer ? "#dc3545" : "#adb5bd"};
   padding: 1rem;
-  border-radius: 0.5rem;
+  border-radius: 8px;
+  width: 45%; /* 두 개가 나란히 보여야 하니까 적당히 반반 */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 80px;
 `;
+
 
 const NavigationButtons = styled.div`
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 3rem;
   margin-top: 2rem;
   width: 80%;
 `;
@@ -71,6 +81,56 @@ const ScoreDisplay = styled.h2`
   color: #343a40;
 `;
 
+const BackButton = styled(Link)`
+  padding: 12px 24px;
+  margin-top: 2rem;
+  border: 2px solid #51CBFF;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  color: #51CBFF;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  
+  &:hover {
+    background: #51CBFF;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(81, 203, 255, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const ExplanationBox = styled.div`
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  padding: 20px;
+  width: 70%;
+  margin: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #51CBFF;
+  text-align: left;
+`;
+
+const ExplanationTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 10px 0;
+`;
+
+const ExplanationText = styled.p`
+  font-size: 16px;
+  color: #666;
+  line-height: 1.5;
+  margin: 0;
+`;
+
 const QuizReview: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -80,12 +140,14 @@ const QuizReview: React.FC = () => {
   const totalQuestions = location.state?.totalQuestions;
   const userAnswers = location.state?.userAnswers;
   const quizQuestions: QuizQuestion[] = location.state?.quizQuestions || [];
+  const explanation = location.state?.explanation;
 
   // 👉 여기에 로그 추가
   console.log("score:", score);
   console.log("totalQuestions:", totalQuestions);
   console.log("userAnswers:", userAnswers);
   console.log("quizQuestions:", quizQuestions);
+  
 
   if (quizQuestions.length === 0 || !userAnswers) {
     return (
@@ -123,31 +185,39 @@ const QuizReview: React.FC = () => {
         <QuestionBox>
           <h3>Q{currentQuestion + 1}. {currentQuiz.question}</h3>
         </QuestionBox>
+        <ExplanationBox>
+          <ExplanationTitle>해설</ExplanationTitle>
+          <ExplanationText>{currentQuiz.explanation}</ExplanationText>
+        </ExplanationBox>
 
         <AnswerSection>
-          {currentQuiz.options
-            .map((option, index) => ({
-              index,
-              content: option.optionContent,
-              isUserAnswer: userAnswer === index,
-              isCorrectAnswer: index === currentQuiz.correctAnswer,
-            }))
-            .filter(
-              ({ isUserAnswer, isCorrectAnswer }) =>
-                isUserAnswer || isCorrectAnswer
-            )
-            .map(({ index, content, isUserAnswer, isCorrectAnswer }) => (
-              <AnswerCard
-                key={index}
-                isCorrect={isCorrectAnswer}
-                isUserAnswer={isUserAnswer}
-              >
-                {isCorrectAnswer ? "✅ 정답" : isUserAnswer ? "❌ 선택" : ""}
-                <div>{content}</div>
-              </AnswerCard>
-            ))}
-        </AnswerSection>
+  {currentQuiz.options.map((option, index) => {
+    const isUserAnswer = userAnswer === index;
+    const isCorrectAnswer = index === currentQuiz.correctAnswer;
+    const userWasCorrect = userAnswer === currentQuiz.correctAnswer;
 
+    let label = "";
+    if (userWasCorrect && isUserAnswer) {
+      label = "✅ 정답";
+    } else if (!userWasCorrect) {
+      if (isUserAnswer) label = "❌ 선택";
+      if (isCorrectAnswer) label = "✅ 정답";
+    }
+
+    return (
+      <AnswerCard
+        key={index}
+        isCorrect={isCorrectAnswer}
+        isUserAnswer={isUserAnswer}
+      >
+        <div>{label}</div>
+        <div>{option}</div>
+      </AnswerCard>
+    );
+  })}
+</AnswerSection>
+
+   
         <NavigationButtons>
           <NavButton onClick={handlePrev} disabled={currentQuestion === 0}>
             이전
@@ -158,7 +228,11 @@ const QuizReview: React.FC = () => {
           >
             다음
           </NavButton>
+          
         </NavigationButtons>
+        <BackButton to="/game">
+          결과로 돌아가기
+        </BackButton>
       </ContentContainer>
     </ReviewContainer>
   );
