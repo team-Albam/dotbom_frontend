@@ -1,104 +1,137 @@
-import React from 'react';
-import Navigation from '../components/Navigation';
+import React from "react";
+import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
+import Navigation from "../components/Navigation";
+import { FaSearch } from "react-icons/fa";
+
+const GameContainer = styled.div`
+  min-height: 100vh;
+  background: linear-gradient(
+    135deg,
+    #ffe4e1 0%,
+    #fff8dc 25%,
+    #ffffff 50%,
+    #f0f8ff 75%,
+    #e6e6fa 100%
+  );
+  padding-top: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const ContentContainer = styled.div`
+  max-width: 800px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 20px;
+`;
+
+const ProgressSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 40px;
+`;
+
+const ProgressLabel = styled.span`
+  font-size: 16px;
+  color: #4A90E2;
+  font-weight: bold;
+`;
+
+const ProgressIndicator = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+
+const LifeIcon = styled(FaSearch)<{ active?: boolean }>`
+  color: ${(props) => (props.active ? "#4A90E2" : "#D1D5DB")};
+  font-size: 18px;
+`;
+
+const MainTitle = styled.h1`
+  font-size: 36px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 60px 0;
+  line-height: 1.4;
+`;
+
+const BookIllustration = styled.div`
+  width: 200px;
+  height: 200px;
+  margin: 0 0 50px 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const BookStack = styled.img`
+  position: relative;
+  transform-style: preserve-3d;
+  width: 300px;
+  height: 300px;
+`;
+
+const StartButton = styled.button`
+  background: #00B2FF;
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+
+  &:hover {
+    background: #0099cc;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(74, 144, 226, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
 
 const Game: React.FC = () => {
-  const gameStyles = {
-    game: {
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #FFE4E1 0%, #FFF8DC 25%, #FFFFFF 50%, #F0F8FF 75%, #E6E6FA 100%)',
-      paddingTop: '70px',
-    },
-    gameContent: {
-      maxWidth: '1200px',
-      margin: '0 auto',
-      padding: '40px 20px',
-    },
-    gameTitle: {
-      fontSize: '2.5rem',
-      color: '#333',
-      textAlign: 'center' as const,
-      marginBottom: '40px',
-      fontWeight: 600,
-    },
-    gameSection: {
-      background: 'rgba(255, 255, 255, 0.9)',
-      padding: '40px',
-      borderRadius: '20px',
-      boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
-      backdropFilter: 'blur(10px)',
-    },
-    gameSectionTitle: {
-      fontSize: '2rem',
-      color: '#333',
-      textAlign: 'center' as const,
-      marginBottom: '40px',
-      fontWeight: 600,
-    },
-    gameOptions: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-      gap: '30px',
-    },
-    gameOption: {
-      background: 'rgba(255, 255, 255, 0.7)',
-      padding: '30px',
-      borderRadius: '15px',
-      boxShadow: '0 5px 15px rgba(0, 0, 0, 0.1)',
-      transition: 'transform 0.3s ease',
-      textAlign: 'center' as const,
-    },
-    gameOptionTitle: {
-      fontSize: '1.5rem',
-      color: '#4682B4',
-      marginBottom: '15px',
-      fontWeight: 600,
-    },
-    gameOptionText: {
-      color: '#666',
-      lineHeight: 1.6,
-      marginBottom: '20px',
-    },
-    gameBtn: {
-      background: 'linear-gradient(135deg, #4682B4, #87CEEB)',
-      color: 'white',
-      border: 'none',
-      padding: '12px 30px',
-      borderRadius: '25px',
-      fontSize: '16px',
-      fontWeight: 600,
-      cursor: 'pointer',
-      transition: 'transform 0.3s ease',
-    },
+  const navigate = useNavigate();
+
+  const handleStartTraining = () => {
+    navigate('/difficulty');
   };
 
   return (
-    <div style={gameStyles.game}>
+    <GameContainer>
       <Navigation />
-      <div style={gameStyles.gameContent}>
-        <h1 style={gameStyles.gameTitle}>훈련 게임</h1>
-        <div style={gameStyles.gameSection}>
-          <h2 style={gameStyles.gameSectionTitle}>게임 선택</h2>
-          <div style={gameStyles.gameOptions}>
-            <div style={gameStyles.gameOption}>
-              <h3 style={gameStyles.gameOptionTitle}>속도 훈련</h3>
-              <p style={gameStyles.gameOptionText}>빠른 속도로 텍스트를 읽고 이해하는 능력을 향상시킵니다.</p>
-              <button style={gameStyles.gameBtn}>시작하기</button>
-            </div>
-            <div style={gameStyles.gameOption}>
-              <h3 style={gameStyles.gameOptionTitle}>집중력 훈련</h3>
-              <p style={gameStyles.gameOptionText}>집중력을 향상시키는 게임을 통해 더 나은 읽기 능력을 기를 수 있습니다.</p>
-              <button style={gameStyles.gameBtn}>시작하기</button>
-            </div>
-            <div style={gameStyles.gameOption}>
-              <h3 style={gameStyles.gameOptionTitle}>이해력 훈련</h3>
-              <p style={gameStyles.gameOptionText}>텍스트의 내용을 정확히 이해하는 능력을 향상시킵니다.</p>
-              <button style={gameStyles.gameBtn}>시작하기</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+      <ContentContainer>
+        <ProgressSection>
+          <ProgressLabel>훈련 기회</ProgressLabel>
+          <ProgressIndicator>
+            <LifeIcon active />
+            <LifeIcon />
+            <LifeIcon />
+          </ProgressIndicator>
+        </ProgressSection>
+
+        <MainTitle>훈련을 통해 조금씩, 확실하게 성장하세요</MainTitle>
+
+        <BookIllustration>
+          <BookStack src="/img/books.png" />
+        </BookIllustration>
+
+        <StartButton onClick={handleStartTraining}>훈련 시작하기</StartButton>
+      </ContentContainer>
+    </GameContainer>
   );
 };
 
-export default Game; 
+export default Game;
