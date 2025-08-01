@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import Navigation from "../components/Navigation";
 import type { QuizQuestion } from "../data/questions";
@@ -133,15 +133,13 @@ const ExplanationText = styled.p`
 
 const QuizReview: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [currentQuestion, setCurrentQuestion] = useState(0);
 
   const score = location.state?.score;
   const totalQuestions = location.state?.totalQuestions;
   const userAnswers = location.state?.userAnswers;
   const quizQuestions: QuizQuestion[] = location.state?.quizQuestions || [];
-  const explanation = location.state?.explanation;
-
+  
   // 👉 여기에 로그 추가
   console.log("score:", score);
   console.log("totalQuestions:", totalQuestions);
@@ -163,7 +161,6 @@ const QuizReview: React.FC = () => {
 
   const currentQuiz = quizQuestions[currentQuestion];
   const userAnswer = userAnswers[currentQuestion];
-  const isCorrect = userAnswer === currentQuiz.correctAnswer;
 
   const handlePrev = () => {
     if (currentQuestion > 0) setCurrentQuestion((prev) => prev - 1);
