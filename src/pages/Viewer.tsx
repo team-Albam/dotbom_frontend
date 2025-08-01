@@ -404,7 +404,7 @@ const Viewer: React.FC = () => {
       const endpoints = {
         "가독성 향상": "/viewer/readability",
         "AI 요약": "/viewer/ai",
-        "쉬운 문장": "/viewer/easy",
+        "쉬운 문장": "/viewer/easy-text",
         "TTS 낭독": "/viewer/tts"
       };
       return endpoints[conversionType as keyof typeof endpoints] || "/viewer/readability";
