@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import styled from "styled-components";
 import Navigation from "../components/Navigation";
 import axiosInstance from "../api/axiosInstance";
+import { useSettings } from "../contexts/SettingsContext";
 
 const ViewerContainer = styled.div`
   height: 100vh;
@@ -201,22 +202,22 @@ const ConversionButton = styled.button<{ $active?: boolean }>`
   }
 `;
 
-const ResultDisplay = styled.div`
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 15px;
-  min-height: 200px;
-  font-size: 16px;
-  line-height: 1.6;
-  color: #333;
-  display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-`;
+// const ResultDisplay = styled.div`
+//   background: white;
+//   border: 1px solid #ddd;
+//   border-radius: 10px;
+//   padding: 15px;
+//   min-height: 200px;
+//   font-size: 16px;
+//   line-height: 1.6;
+//   color: #333;
+//   display: flex;
+//   align-items: flex-start;
+//   justify-content: flex-start;
+//   overflow-y: auto;
+//   white-space: pre-wrap;
+//   word-wrap: break-word;
+// `;
 
 const UploadedFileDisplay = styled.div`
   background: white;
@@ -275,15 +276,74 @@ const PDFText = styled.div`
   text-align: center;
 `;
 
+
+const ResultDisplay = styled.div<{
+  $bgColor: string;
+  $fontSize: string;
+  $textColor: string;
+  $width: string;
+  $letterSpacing: string;
+}>`
+  background-color: ${(props) => props.$bgColor};
+  font-size: ${(props) => props.$fontSize};
+  color: ${(props) => props.$textColor};
+  max-width: ${(props) => props.$width};
+  letter-spacing: ${(props) => props.$letterSpacing};
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 15px;
+  min-height: 200px;
+  line-height: 1.6;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+`;
+
 const Viewer: React.FC = () => {
+  const { settings } = useSettings();
+
+  // Mapping objects for converting settings to CSS values
+  const backgroundColorMap = {
+    light: "#ffffff",
+    dark: "#1a1a1a",
+    auto: "#f5f5f5"
+  } as const;
+
+  const fontSizeMap = {
+    small: "14px",
+    medium: "16px",
+    large: "18px"
+  } as const;
+
+  const textColorMap = {
+    black: "#000000",
+    blue: "#0066cc",
+    green: "#006600",
+    red: "#cc0000",
+    yellow: "#cc9900"
+  } as const;
+
+  const textWidthMap = {
+    narrow: "600px",
+    medium: "800px",
+    wide: "1000px"
+  } as const;
+
+  const letterSpacingMap = {
+    tight: "-0.5px",
+    normal: "0px",
+    wide: "1px"
+  } as const;
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string>("");
   const [pdfUrl, setPdfUrl] = useState<string>("");
   const [extractedText, setExtractedText] = useState<string>("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [activeConversion, setActiveConversion] =
-    useState<string | null>(null);
+  const [activeConversion, setActiveConversion] = useState<string | null>(null);
+  const [uploadedFileId, setUploadedFileId] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
 
 
@@ -300,6 +360,7 @@ const Viewer: React.FC = () => {
       setUploadProgress(0);
       setIsUploading(true);
       setExtractedText("");
+      setActiveConversion(null);
     
       if (["jpg", "jpeg", "png"].includes(ext)) {
         const reader = new FileReader();
@@ -313,7 +374,7 @@ const Viewer: React.FC = () => {
       formData.append("file", file);
 
       try {
-        // First, upload the file to get the file ID
+        // Only upload the file and get the file ID
         const uploadResponse = await axiosInstance.post("/viewer/file-upload", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -326,25 +387,63 @@ const Viewer: React.FC = () => {
           },
         });
 
-        const uploadedFileId = uploadResponse.data.fileId;
+        const fileId = uploadResponse.data.fileId;
+        setUploadedFileId(fileId);
         setIsUploading(false);
-
-        // Then, use the file ID to get readability analysis
-        const readabilityResponse = await axiosInstance.post("/viewer/readability", {
-          fileId: uploadedFileId,
-        });
-        const { improvedText } = readabilityResponse.data;
-        console.log("📝 추출된 텍스트:", improvedText);  // 콘솔 출력 추가
-        setExtractedText(improvedText);
-        
+        console.log("📂 파일 업로드 완료. 파일 ID:", fileId);
         
       } catch (error) {
-        console.error("File processing error:", error);
+        console.error("File upload error:", error);
         setIsUploading(false);
-        alert("파일 처리 중 오류가 발생했습니다.");
+        alert("파일 업로드 중 오류가 발생했습니다.");
       }
-
     };
+
+    // 변환 타입별 API 엔드포인트 매핑
+    const getConversionEndpoint = (conversionType: string) => {
+      const endpoints = {
+        "가독성 향상": "/viewer/readability",
+        "AI 요약": "/viewer/ai",
+        "쉬운 문장": "/viewer/easy",
+        "TTS 낭독": "/viewer/tts"
+      };
+      return endpoints[conversionType as keyof typeof endpoints] || "/viewer/readability";
+    };
+
+
+    
+
+    // 변환 버튼 클릭 핸들러
+    const handleConversionClick = async (conversionType: string) => {
+      if (!uploadedFileId) {
+        alert("먼저 파일을 업로드해주세요.");
+        return;
+      }
+    
+      setActiveConversion(conversionType);
+      setIsProcessing(true);
+      setExtractedText("");
+    
+      try {
+        const endpoint = getConversionEndpoint(conversionType);
+        console.log("Request to:", endpoint, "with fileId:", uploadedFileId);
+    
+        const response = await axiosInstance.post(endpoint, {
+          fileId: uploadedFileId,
+        });
+      
+        const { result } = response.data;
+        console.log("📝 추출된 텍스트:", result);  // 콘솔 출력 추가
+        setExtractedText(result);
+        
+      } catch (error) {``
+        console.error(`${conversionType} 처리 오류:`, error);
+        alert(`${conversionType} 처리 중 오류가 발생했습니다.`);
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+    
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -374,6 +473,9 @@ const Viewer: React.FC = () => {
     setExtractedText("");
     setIsUploading(false);
     setUploadProgress(0);
+    setUploadedFileId(null);
+    setActiveConversion(null);
+    setIsProcessing(false);
   };
 
   const isImageFile = (fileName: string) => {
@@ -466,19 +568,32 @@ const Viewer: React.FC = () => {
                 <ConversionButton
                   key={option}
                   $active={activeConversion === option}
-                  onClick={() => setActiveConversion(option)}
+                  onClick={() => handleConversionClick(option)}
+                  disabled={!uploadedFileId || isProcessing}
                 >
-                  {option}
+                  {isProcessing && activeConversion === option ? "처리중..." : option}
                 </ConversionButton>
               ))}
             </ConversionButtons>
             <ToolSection style={{ marginTop: "35px" }}>
               <ToolTitle>변환 내용을 확인하세요</ToolTitle>
-              <ResultDisplay>
-                {extractedText ? (
+              <ResultDisplay
+                $bgColor={backgroundColorMap[settings.backgroundColor]}
+                $fontSize={fontSizeMap[settings.fontSize]}
+                $textColor={textColorMap[settings.textColor]}
+                $width={textWidthMap[settings.textWidth as keyof typeof textWidthMap]}
+                $letterSpacing={letterSpacingMap[settings.letterSpacing]}
+              >
+                {isProcessing ? (
+                  <div style={{ textAlign: "center", color: "#666" }}>
+                    <p>{activeConversion} 처리 중입니다...</p>
+                  </div>
+                ) : extractedText ? (
                   <div>{extractedText}</div>
+                ) : uploadedFileId ? (
+                  <p>변환 옵션을 선택하여 텍스트를 변환해보세요.</p>
                 ) : (
-                  <p>변환된 내용이 여기에 표시됩니다.</p>
+                  <p>파일을 업로드한 후 변환 옵션을 선택해주세요.</p>
                 )}
               </ResultDisplay>
             </ToolSection>

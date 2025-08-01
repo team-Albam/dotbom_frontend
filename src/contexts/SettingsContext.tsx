@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
 
-interface Settings {
+export interface Settings {
   fontSize: "small" | "medium" | "large";
   backgroundColor: "light" | "dark" | "auto";
   textColor: "black" | "blue" | "green" | "red" | "yellow";
