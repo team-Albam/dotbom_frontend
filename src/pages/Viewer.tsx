@@ -285,44 +285,66 @@ const Viewer: React.FC = () => {
   const [activeConversion, setActiveConversion] =
     useState<string | null>(null);
 
-  useEffect(() => {
-    axiosInstance
-      .get("/viewer/readability")
-      .then((res) => setExtractedText(res.data.text))
-      .catch((err) => console.error("Text fetch error", err));
-  }, []);
 
-  const handleFileProcess = async (file: File) => {
-    const ext = file.name.toLowerCase().split(".").pop();
-    const allowed = ["jpg", "jpeg", "png", "pdf"];
-    if (!ext || !allowed.includes(ext)) {
-      alert("지원하지 않는 파일 형식입니다. .jpg, .png, .pdf 파일만 가능합니다.");
-      return;
-    }
-    setSelectedFile(file);
-    setUploadProgress(0);
-    setIsUploading(true);
-    setExtractedText("");
 
-    if (["jpg", "jpeg", "png"].includes(ext)) {
-      const reader = new FileReader();
-      reader.onload = (e) => setFilePreview(e.target?.result as string);
-      reader.readAsDataURL(file);
-    } else if (ext === "pdf") {
-      setPdfUrl(URL.createObjectURL(file));
-    }
+    const handleFileProcess = async (file: File) => {
+      const ext = file.name.toLowerCase().split(".").pop();
 
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsUploading(false);
-          return 100;
-        }
-        return prev + 5;
-      });
-    }, 100);
-  };
+      const allowed = ["jpg", "jpeg", "png", "pdf"];
+      if (!ext || !allowed.includes(ext)) {
+        alert("지원하지 않는 파일 형식입니다. .jpg, .png, .pdf 파일만 가능합니다.");
+        return;
+      }
+    
+      setSelectedFile(file);
+      setUploadProgress(0);
+      setIsUploading(true);
+      setExtractedText("");
+    
+      if (["jpg", "jpeg", "png"].includes(ext)) {
+        const reader = new FileReader();
+        reader.onload = (e) => setFilePreview(e.target?.result as string);
+        reader.readAsDataURL(file);
+      } else if (ext === "pdf") {
+        setPdfUrl(URL.createObjectURL(file));
+      }
+
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        // First, upload the file to get the file ID
+        const uploadResponse = await axiosInstance.post("/viewer/file-upload", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round(
+              (progressEvent.loaded * 100) / (progressEvent.total || 1)
+            );
+            setUploadProgress(percentCompleted);
+          },
+        });
+
+        const uploadedFileId = uploadResponse.data.fileId;
+        setIsUploading(false);
+
+        // Then, use the file ID to get readability analysis
+        const readabilityResponse = await axiosInstance.post("/viewer/readability", {
+          fileId: uploadedFileId,
+        });
+        const { improvedText } = readabilityResponse.data;
+        console.log("📝 추출된 텍스트:", improvedText);  // 콘솔 출력 추가
+        setExtractedText(improvedText);
+        
+        
+      } catch (error) {
+        console.error("File processing error:", error);
+        setIsUploading(false);
+        alert("파일 처리 중 오류가 발생했습니다.");
+      }
+
+    };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
