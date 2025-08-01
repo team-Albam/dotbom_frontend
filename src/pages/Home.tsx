@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useRef } from "react";
 
 // Color interpolation helper function
@@ -122,6 +122,7 @@ const MainTitle = styled.h1`
   letter-spacing: -2.5%;
   text-align: center;
   white-space: nowrap;
+  text-shadow: 0 2px 6px rgba(85, 126, 221, 0.88); 
   margin: 0;
 
   /* ✅ 텍스트 불투명하게 유지 */
@@ -257,12 +258,14 @@ const FeatureTitle = styled.h3`
 
 
 
-const CTAButton = styled.button`
+const CTAButton = styled(Link)`
   background: linear-gradient(135deg, #51CBFF 0%, #9C88FF 100%);
   width: 47%;
   color: white;
   padding: 20px 40px;
   font-size: 1.1rem;
+  justify-content: center;
+  text-align: center;
   font-weight: 500;
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
@@ -459,7 +462,7 @@ const Home: React.FC = () => {
         </SecondSection>
   </div>
         <ThirdSection>
-        <CTAButton>
+        <CTAButton to="/viewer">
           지금 이용 이용해보세요
         </CTAButton>
         <BottomText>로그인 없이도 바로 이용할 수 있어요</BottomText>
