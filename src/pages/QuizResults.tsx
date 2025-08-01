@@ -137,10 +137,11 @@ const QuizResults: React.FC<QuizResultsProps> = () => {
     width: window.innerWidth,
     height: window.innerHeight
   });
+  const navigate = useNavigate();
   
   // Get score from location state or use default values
-  const score = location.state?.score || 4; // Default to 4 out of 5 for demo
-  const totalQuestions = location.state?.totalQuestions || 5;
+  const score = location.state?.score;
+  const totalQuestions = location.state?.totalQuestions;
 
   // 색종이 애니메이션 시작
   useEffect(() => {
@@ -223,13 +224,17 @@ const QuizResults: React.FC<QuizResultsProps> = () => {
         </ScoreSection>
         
         <ButtonContainer>
-          <ActionButton variant="primary" to="/review">
-            결과 확인하기
-          </ActionButton>
-          <ActionButton variant="secondary" to="/game" >
-            돌아가기
-          </ActionButton>
-        </ButtonContainer>
+      <ActionButton
+        as="button"
+        variant="primary"
+        onClick={() => navigate("/review", { state: location.state })}
+      >
+        결과 확인하기
+      </ActionButton>
+      <ActionButton variant="secondary" to="/game">
+        돌아가기
+      </ActionButton>
+    </ButtonContainer>
       </ContentContainer>
     </ResultsContainer>
   );
