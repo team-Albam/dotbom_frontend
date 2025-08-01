@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
 import { useSettings } from "../contexts/SettingsContext";
 
 const NavigationContainer = styled.nav`
@@ -27,11 +28,21 @@ const LeftSection = styled.div`
   align-items: center;
 `;
 
-const Logo = styled(Link)`
+const Logo = styled.button`
   display: flex;
   align-items: center;
   text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+
+  &:focus {
+    outline: none;
+  }
 `;
+
 
 const LogoImg = styled.img`
   height: 40px;
@@ -44,16 +55,25 @@ const CenterSection = styled.div`
   gap: 30px;
 `;
 
-const MenuLink = styled(Link)`
-  text-decoration: none;
+const MenuLink = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
   color: #333;
   font-size: 16px;
   font-weight: 500;
   transition: color 0.3s ease;
   font-family: 'Arial', sans-serif;
+  text-decoration: none;
 
   &:hover {
     color: #4682B4;
+  }
+
+  &:focus {
+    outline: none;
   }
 `;
 
@@ -82,6 +102,16 @@ const SettingsButton = styled.button`
 
 const Navigation: React.FC = () => {
   const { setIsModalOpen } = useSettings();
+  const navigate = useNavigate();
+
+  const handleServiceClick = () => {
+    navigate("/", { state: { scrollTo: "second" } });
+  };
+
+  const handleLogoClick = () => {
+    navigate("/");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleSettingsClick = () => {
     setIsModalOpen(true);
@@ -91,17 +121,17 @@ const Navigation: React.FC = () => {
     <NavigationContainer>
       <NavWrapper>
         <LeftSection>
-          <Logo to="/">
+          <Logo onClick={handleLogoClick}>
             <LogoImg src="/img/logo.png" alt="Dotbom Logo" />
           </Logo>
         </LeftSection>
-        
+
         <CenterSection>
-          <MenuLink to="/service">서비스 안내</MenuLink>
-          <MenuLink to="/viewer">가독성 향상 뷰어</MenuLink>
-          <MenuLink to="/game">훈련 게임</MenuLink>
+          <MenuLink onClick={handleServiceClick}>서비스 안내</MenuLink>
+          <MenuLink as={Link} to="/viewer">가독성 향상 뷰어</MenuLink>
+          <MenuLink as={Link} to="/game">훈련 게임</MenuLink>
         </CenterSection>
-        
+
         <RightSection>
           <SettingsButton onClick={handleSettingsClick}>
             사용자 맞춤 설정

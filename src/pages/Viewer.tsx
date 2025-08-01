@@ -222,7 +222,7 @@ const ConversionButton = styled.button<{ $active?: boolean }>`
 const UploadedFileDisplay = styled.div`
   background: white;
   width: 100%;
-  height: 300px;
+  height: 400px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -293,11 +293,26 @@ const ResultDisplay = styled.div<{
   border-radius: 10px;
   padding: 15px;
   min-height: 200px;
+  max-height: 300px; /* 여기 추가 */
   line-height: 1.6;
   overflow-y: auto;
   white-space: pre-wrap;
   word-wrap: break-word;
+
+  /* Optional: 스크롤바 스타일 (웹킷 기반 브라우저) */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: #4682b4;
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+  }
 `;
+
 
 const Viewer: React.FC = () => {
   const { settings } = useSettings();

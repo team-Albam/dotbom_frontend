@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import Navigation from '../components/Navigation';
+import { useLocation } from "react-router-dom";
+import { useRef } from "react";
 
 // Color interpolation helper function
 const interpolateColor = (color1: string, color2: string, factor: number): string => {
@@ -62,8 +64,8 @@ const HomeContainer = styled.div<{ scrollY: number }>`
     if (progress < 0.5) {
   return `linear-gradient(
     135deg,
-    #FFF7E9 0%,
-    #FFD1DC 35%,
+rgb(234, 216, 185) 0%,
+rgb(243, 185, 198) 35%,
     #F5D0FE 70%,
     #F0F8FF 100%
   )`;
@@ -148,7 +150,7 @@ const MainTitle = styled.h1`
 
 const BottomText = styled.p`
   font-family: 'Pretendard', sans-serif;
-  font-size: 2rem;       // 40px
+  font-size: 1rem;       // 40px
   font-weight: 400;
   margin-top: 0; 
   line-height: 1.4;
@@ -179,6 +181,15 @@ const SecondSection = styled.div`
   align-items: center;
   justify-content: center;
 `;
+const ThirdSection = styled.div`
+  min-height: 50vh;
+  margin-top: 10pc;
+  padding: 100px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+`;
 
 const SectionTitle = styled.h2`
   font-family: 'Pretendard', sans-serif;
@@ -192,7 +203,7 @@ const SectionTitle = styled.h2`
 `;
 
 const GradientText = styled.span`
-  background: linear-gradient(90deg, #51cbff 0%, #a100ff 100%);
+  background: linear-gradient(90deg, #51cbff 0%,rgb(176, 79, 233) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 `;
@@ -248,15 +259,14 @@ const FeatureTitle = styled.h3`
 
 const CTAButton = styled.button`
   background: linear-gradient(135deg, #51CBFF 0%, #9C88FF 100%);
+  width: 47%;
   color: white;
-  border: none;
-  padding: 15px 40px;
-  border-radius: 25px;
+  padding: 20px 40px;
   font-size: 1.1rem;
   font-weight: 500;
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  margin-bottom: 40px;
+  margin-top: 40px;
   
   &:hover {
     transform: translateY(-2px);
@@ -294,10 +304,8 @@ const DivLine = styled.hr`
 const FooterContent = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
   width: 100%;
-  max-width: 1200px;
+  max-width: 800px;
   margin: 0 auto;
   
   @media (max-width: 768px) {
@@ -311,11 +319,11 @@ const FooterHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   
   @media (max-width: 768px) {
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
   }
 `;
 
@@ -369,6 +377,8 @@ const CompanyDetails = styled.p`
 
 const Home: React.FC = () => {
   const [scrollY, setScrollY] = useState(0);
+  const location = useLocation();
+  const secondSectionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -379,6 +389,12 @@ const Home: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (location.state?.scrollTo === "second" && secondSectionRef.current) {
+      secondSectionRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [location]);
+
   const features = [
     {
       title: "내가 원하는 글에 가독성을 더하다",
@@ -386,11 +402,11 @@ const Home: React.FC = () => {
     },
     {
       title: "읽고 싶은 핵심만, AI 요약",
-      image: "/img/feature2.png"
+      image: "/img/ai.png"
     },
     {
       title: "복잡한 글 쉽게 읽기",
-      image: "/img/feature3.png"
+      image: "/img/easy.png"
     },
     {
       title: "TTS 낭독을 통해, 읽기 부담을 덜다",
@@ -398,11 +414,11 @@ const Home: React.FC = () => {
     },
     {
       title: "내 눈에 딱 맞게 맞춤, 사용자 맞춤 설정",
-      image: "/img/feature5.png"
+      image: "/img/setting.png"
     },
     {
       title: "읽기 훈련, 꾸준히 함께",
-      image: "/img/feature6.png"
+      image: "/img/test.png"
     }   
   ];
 
@@ -410,7 +426,7 @@ const Home: React.FC = () => {
     <HomeContainer scrollY={scrollY}>
       <GradientCircleTopRight />
       <GradientCircleLeftTop />
-      <Navigation />
+      <Navigation/>
       <HomeContent>
         <TopText>
           당신의 시선이 돋보이도록
@@ -422,7 +438,8 @@ const Home: React.FC = () => {
           당신의 읽기를 방해하는 모든 순간에, <strong>돋봄</strong>이 함께합니다
         </BottomText>
       </HomeContent>
-      
+      <div ref={secondSectionRef}>
+    
       <SecondSection>
         <SectionTitle>
           <GradientText>난독증</GradientText>으로부터 불편함,<br />
@@ -439,12 +456,16 @@ const Home: React.FC = () => {
             </FeatureCard>
           ))}
         </FeatureGrid>
-        
+        </SecondSection>
+  </div>
+        <ThirdSection>
         <CTAButton>
           지금 이용 이용해보세요
         </CTAButton>
         <BottomText>로그인 없이도 바로 이용할 수 있어요</BottomText>
         <DivLine/>
+        </ThirdSection>
+      
         <FooterSection>
           <FooterContent>
             <FooterHeader>
@@ -454,7 +475,6 @@ const Home: React.FC = () => {
                 <FooterLogoText src="/img/Logo2Title.png" alt="Dotbom Title" />
               </FooterLogos>
             </FooterHeader>
-            
             <CompanyInfo>
               <CompanyName>(주)알밤이네</CompanyName>
               <CompanyDetails>이용약관 개인정보처리방침</CompanyDetails>
@@ -464,7 +484,7 @@ const Home: React.FC = () => {
             </CompanyInfo>
           </FooterContent>
         </FooterSection>
-      </SecondSection>
+     
     </HomeContainer>
   );
 };
