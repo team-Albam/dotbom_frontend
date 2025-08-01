@@ -327,23 +327,25 @@ const SettingsModal: React.FC = () => {
   };
 
   const handleFinish = () => {
-    const newSettings: Record<string, string> = {};
-    Object.entries(answers).forEach(([step, answer]) => {
-      const question = questions[parseInt(step) - 1];
-      const option = question.options[answer];
-      if (question.settingKey === "fontSize") {
-        newSettings[question.settingKey] = ["14px", "16px", "18px", "22px"][
-          answer
-        ];
-      } else if (question.settingKey === "letterSpacing") {
-        newSettings[question.settingKey] = ["-0.5px", "0px", "1px", "2px"][
-          answer
-        ];
-      } else {
-        newSettings[question.settingKey] =
-          (option.style?.[question.settingKey] as string) ?? "";
-      }
-    });
+  const newSettings: Record<string, string> = {};
+  Object.entries(answers).forEach(([step, answer]) => {
+    const question = questions[parseInt(step) - 1];
+    const key = question.settingKey;
+
+    // enum 값 매핑 테이블
+    const enumMapping: Record<string, string[]> = {
+      fontSize: ["small", "medium", "large", "large"], // 4번째도 large로 처리
+      backgroundColor: ["light", "dark", "light", "auto"],
+      textColor: ["green", "red", "blue", "yellow"],
+      letterSpacing: ["tight", "normal", "wide", "wide"],
+      fontFamily: ["", "", "", ""], // 현재는 사용 안하므로 비워둠
+    };
+
+    // 매핑된 enum 값으로 저장
+    if (enumMapping[key]) {
+      newSettings[key] = enumMapping[key][answer];
+    }
+  });
 
     updateSettings(newSettings);
     setIsModalOpen(false);
