@@ -4,19 +4,21 @@ import { useNavigate, useParams } from "react-router-dom";
 import Navigation from "../components/Navigation";
 import axiosInstance from "../api/axiosInstance";
 
-interface currentQuestionType {
-  id: number,
-  answer: number,
-  content: string,
-  explanation: string,
-  imageUrl: string,
-  level: number,
+// 문제 타입 정의
+interface QuizQuestion {
+  id: number;
+  level: number;
+  content: string;
+  answer: number; // 1부터 시작
+  explanation: string;
+  imageUrl: string | null;
   options: {
-    testNumber: number,
-    optionContent: string,
-  }[],
+    testNumber: number;
+    optionContent: string;
+  }[];
 }
 
+// 스타일 정의 생략 없이 포함
 const QuizContainer = styled.div`
   min-height: 100vh;
   background: linear-gradient(
@@ -172,14 +174,6 @@ const AnswerText = styled.span<{ selected: boolean }>`
   word-break: keep-all;
 `;
 
-
-interface QuizQuestion {
-  id: number;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-}
-
 const Quiz: React.FC = () => {
   const navigate = useNavigate();
   const { difficulty } = useParams<{ difficulty: string }>();
@@ -191,26 +185,24 @@ const Quiz: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load questions based on difficulty
   useEffect(() => {
     const loadQuestions = async () => {
       try {
         setLoading(true);
         setError(null);
-  
-        // 👇 문자열 → 숫자 level 매핑
+
         let level = 1;
         if (difficulty === "중") level = 2;
         else if (difficulty === "상") level = 3;
-  
-        const response = await axiosInstance.get("/training/load"); // 전체 문제 요청
+
+        const response = await axiosInstance.get("/training/load");
         const allQuestions: QuizQuestion[] = response.data;
-  
-        // 👇 해당 level 문제만 필터링 (최대 15개 제한)
+
         const filteredQuestions = allQuestions
-          .filter((q: any) => q.level === level)
+          .filter((q) => q.level === level && q.options && q.options.length > 0)
           .slice(0, 5);
-  
+          
+
         setQuizQuestions(filteredQuestions);
         setAnswers(new Array(filteredQuestions.length).fill(null));
         setCurrentQuestion(0);
@@ -223,11 +215,9 @@ const Quiz: React.FC = () => {
         setLoading(false);
       }
     };
-  
+
     loadQuestions();
   }, [difficulty]);
-  
-  
 
   const handleAnswerSelect = (answerIndex: number) => {
     setSelectedAnswer(answerIndex);
@@ -235,38 +225,37 @@ const Quiz: React.FC = () => {
     newAnswers[currentQuestion] = answerIndex;
     setAnswers(newAnswers);
 
-    // 슬라이드 아웃 애니메이션 시작
     setAnimationState("slideOut");
 
     setTimeout(() => {
       if (currentQuestion < quizQuestions.length - 1) {
-        // 다음 문제로 이동
         setCurrentQuestion(currentQuestion + 1);
         setSelectedAnswer(newAnswers[currentQuestion + 1]);
-
-        // 슬라이드 인 애니메이션 시작
         setAnimationState("slideIn");
 
-        // 애니메이션 완료 후 idle 상태로 변경
-        setTimeout(() => {
-          setAnimationState("idle");
-        }, 300);
+        setTimeout(() => setAnimationState("idle"), 300);
       } else {
-        // Quiz completed - calculate score and navigate to results
-        const score = newAnswers.reduce((total: number, answer, index) => {
-          return total + (answer === quizQuestions[index].correctAnswer ? 1 : 0);
+        const score = newAnswers.reduce((total, answer, index) => {
+          const correctIndex = quizQuestions[index].answer - 1;
+          return total + (answer === correctIndex ? 1 : 0);
         }, 0);
 
         navigate("/results", {
-          state: {
-            score: score,
-            totalQuestions: quizQuestions.length,
-            userAnswers: newAnswers,
-            difficulty: difficulty,
-          },
-        });
+  state: {
+    score,
+    totalQuestions: quizQuestions.length,
+    userAnswers: newAnswers,
+    quizQuestions: quizQuestions.map(q => ({
+      question: q.content, // ✅ 이게 핵심
+      correctAnswer: q.answer,
+      options: q.options
+    })),
+    difficulty,
+  },
+});
+
       }
-    }, 400); // 애니메이션 시간에 맞춰 조정
+    }, 400);
   };
 
   if (loading) {
@@ -319,8 +308,12 @@ const Quiz: React.FC = () => {
     );
   }
 
-  const currentQuiz: currentQuestionType = quizQuestions[currentQuestion];
+  const currentQuiz = quizQuestions[currentQuestion];
   const progress = ((currentQuestion + 1) / quizQuestions.length) * 100;
+
+  const displayedOptions = currentQuiz.options
+    .filter((opt) => opt.testNumber >= 1 && opt.testNumber <= 4)
+    .slice(0, 4);
 
   return (
     <QuizContainer>
@@ -328,13 +321,11 @@ const Quiz: React.FC = () => {
       <ContentContainer>
         <ProgressSection>
           <ProgressText>다음 단어에서 ( ) 안에 들어갈 받침으로 알맞은 것을 골라주세요.</ProgressText>
-
           <ProgressContainer>
             <ProgressIndicator>
               {currentQuestion + 1} / {quizQuestions.length}
             </ProgressIndicator>
           </ProgressContainer>
-
           <ProgressBar>
             <ProgressFill progress={progress} />
           </ProgressBar>
@@ -345,22 +336,18 @@ const Quiz: React.FC = () => {
         </QuestionSection>
 
         <AnswerSection animate={animationState}>
-  {[...new Map(currentQuiz.options.map(option => [option.testNumber, option])).values()]
-    .slice(0, 2) // 답안 2개만 출력
-    .map((option, index) => (
-      <AnswerCard
-        key={option.testNumber}
-        selected={selectedAnswer === index}
-        onClick={() => handleAnswerSelect(index)}
-      >
-        <AnswerText selected={selectedAnswer === index}>
-          {option.optionContent}
-        </AnswerText>
-      </AnswerCard>
-    ))}
-</AnswerSection>
-
-
+          {displayedOptions.map((option, index) => (
+            <AnswerCard
+              key={`${currentQuiz.id}-${index}`}
+              selected={selectedAnswer === index}
+              onClick={() => handleAnswerSelect(index)}
+            >
+              <AnswerText selected={selectedAnswer === index}>
+                {option.optionContent}
+              </AnswerText>
+            </AnswerCard>
+          ))}
+        </AnswerSection>
       </ContentContainer>
     </QuizContainer>
   );
