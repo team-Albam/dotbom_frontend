@@ -22,12 +22,52 @@ const interpolateColor = (color1: string, color2: string, factor: number): strin
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 };
 
+const GradientCircleTopRight = styled.div`
+  position: absolute;
+  top: -403px;
+  left: 1457px;
+  width: 926.58px;
+  height: 926.58px;
+  background: linear-gradient(135deg, #A100FF 7%, #18F1EE 100%);
+  opacity: 0.4;
+  filter: blur(100px);
+  border-radius: 50%;
+  z-index: 0;
+`;
+
+const GradientCircleLeftTop = styled.div`
+  position: absolute;
+  top: -507px;
+  left: -651px;
+  width: 1921.82px;
+  height: 1921.82px;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 225, 0, 0.12) 0%,   // #FFE100
+    rgba(255, 16, 0, 0.27) 50%,  // #FF1000
+    rgba(241, 27, 208, 0.82) 100% // #F11BD0
+  );
+  opacity: 0.4;
+  filter: blur(200px);
+  border-radius: 50%;
+  z-index: 0;
+`;
+
+
+
 const HomeContainer = styled.div<{ scrollY: number }>`
   min-height: 200vh;
   background: ${props => {
     const progress = Math.min(props.scrollY / window.innerHeight, 1);
     if (progress < 0.5) {
-      return `linear-gradient(135deg, #E8B4CB 0%, #D8A7CA 25%, #C8A2C8 50%, #B8A9C9 75%, #A8B0CA 100%)`;
+  return `linear-gradient(
+    135deg,
+    #FFF7E9 0%,
+    #FFD1DC 35%,
+    #F5D0FE 70%,
+    #F0F8FF 100%
+  )`;
+
     } else {
       const fadeProgress = (progress - 0.5) * 2;
       return `linear-gradient(135deg, 
@@ -56,35 +96,79 @@ const HomeContent = styled.div`
 `;
 
 const TopText = styled.div`
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 1.1rem;
-  font-weight: 300;
-  margin-bottom: 20px;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 3rem;         // 64px = 4rem
+  font-weight: 800;        // ExtraBold (보통 800)
+  color: #ffffff;
   line-height: 1.4;
-`;
+  letter-spacing: -2.5%;
+  text-align: center;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); // 배경 대비용 그림자
+  margin-bottom: 0.5rem;
 
-const MainTitle = styled.h1`
-  font-size: 8rem;
-  font-weight: 300;
-  color: white;
-  margin: 40px 0;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  letter-spacing: -2px;
-  font-family: 'Helvetica Neue', Arial, sans-serif;
-  
   @media (max-width: 768px) {
-    font-size: 4rem;
+    font-size: 2rem; // 반응형 대응
   }
 `;
 
-const BottomText = styled.div`
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 1rem;
-  font-weight: 300;
-  margin-top: 40px;
-  line-height: 1.5;
-  max-width: 600px;
+
+const MainTitle = styled.h1`
+  font-family: 'Pretendard', sans-serif;
+  font-size: 14.375rem; /* 230px */
+  font-weight: 600; /* SemiBold */
+  line-height: 1.4;
+  letter-spacing: -2.5%;
+  text-align: center;
+  white-space: nowrap;
+  margin: 0;
+
+  /* ✅ 텍스트 불투명하게 유지 */
+  opacity: 1;
+
+  /* ✅ 텍스트 색상 표현을 위한 gradient */
+  background: radial-gradient(
+    circle at center,
+    #FFF7E9 0%,
+    #FFFFFF 49%,
+    #FFF7E9 98%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+
+  
+  @media (max-width: 768px) {
+    font-size: 5rem;
+  }
 `;
+
+
+
+
+
+
+const BottomText = styled.p`
+  font-family: 'Pretendard', sans-serif;
+  font-size: 2rem;       // 40px
+  font-weight: 400;
+  margin-top: 0; 
+  line-height: 1.4;
+  letter-spacing: -2.5%;
+  color: #877971;
+  text-align: center;
+  margin-top: 2rem;
+  max-width: 800px;
+
+  strong {
+    font-weight: 700;
+    color: #6A5E4F; 
+  }
+
+  @media (max-width: 768px) {
+    font-size: 1.3rem;
+  }
+`;
+
+
 
 // Second section styles
 const SecondSection = styled.div`
@@ -97,19 +181,29 @@ const SecondSection = styled.div`
 `;
 
 const SectionTitle = styled.h2`
-  color: #51CBFF;
-  font-size: 1.5rem;
-  font-weight: 400;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 50px;
+  font-weight: 600; /* SemiBold */
+  color: #ffffff;
   text-align: center;
-  margin-bottom: 60px;
   line-height: 1.4;
+  letter-spacing: -0.025em;
+  margin-bottom: 60px;
 `;
+
+const GradientText = styled.span`
+  background: linear-gradient(90deg, #51cbff 0%, #a100ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+`;
+
 
 const FeatureGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 30px;
-  max-width: 800px;
+  max-width: 700px;
+  height: 700px;
   width: 100%;
   margin-bottom: 60px;
   
@@ -314,24 +408,25 @@ const Home: React.FC = () => {
 
   return (
     <HomeContainer scrollY={scrollY}>
+      <GradientCircleTopRight />
+      <GradientCircleLeftTop />
       <Navigation />
       <HomeContent>
         <TopText>
-          학습의 시작이 곧 성장의 시작<br />
-          당신의 시선이 흘러가도록
+          당신의 시선이 돋보이도록
         </TopText>
         
         <MainTitle>Dotbom</MainTitle>
         
         <BottomText>
-          당신의 읽기를 향해하는 모든 순간에, 돌봄이 함께합니다
+          당신의 읽기를 방해하는 모든 순간에, <strong>돋봄</strong>이 함께합니다
         </BottomText>
       </HomeContent>
       
       <SecondSection>
         <SectionTitle>
-          부족으로부터의 불편함,<br />
-          이제 돌봄이 되어드리겠습니다.
+          <GradientText>난독증</GradientText>으로부터 불편함,<br />
+          이제 돋봄이 덜어드리겠습니다.
         </SectionTitle>
         
         <FeatureGrid>

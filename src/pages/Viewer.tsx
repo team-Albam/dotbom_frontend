@@ -486,6 +486,8 @@ const Viewer: React.FC = () => {
 
   const conversionOptions = ["가독성 향상", "AI 요약", "쉬운 문장", "TTS 낭독"];
 
+  console.log("📋 settings 값 확인:", settings);
+
   return (
     <ViewerContainer>
       <Navigation />
@@ -589,7 +591,7 @@ const Viewer: React.FC = () => {
                     <p>{activeConversion} 처리 중입니다...</p>
                   </div>
                 ) : extractedText ? (
-                  <div>{extractedText}</div>
+                  extractedText
                 ) : uploadedFileId ? (
                   <p>변환 옵션을 선택하여 텍스트를 변환해보세요.</p>
                 ) : (

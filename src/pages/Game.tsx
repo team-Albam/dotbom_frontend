@@ -18,7 +18,41 @@ const GameContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 `;
+
+const GradientCircle = styled.div`
+  position: absolute;
+  top: -280px;
+  left: 1395px;
+  width: 926.58px;
+  height: 926.58px;
+  background: linear-gradient(135deg, #A100FF 7%, #18F1EE 100%);
+  opacity: 0.4;
+  filter: blur(100px); // Figma의 layer blur 효과 반영
+  border-radius: 50%;
+  z-index: 0; // 필요시 조정
+`;
+
+const GradientCircleLeft = styled.div`
+  position: absolute;
+  top: 292px;
+  left: -654px;
+  width: 1184.52px;
+  height: 1184.52px;
+  background: linear-gradient(
+    135deg,
+    #FFE100 0%,
+    #FF1000 50%,
+    #F11BD0 100%
+  );
+  opacity: 0.4;
+  filter: blur(100px);
+  border-radius: 50%;
+  z-index: 0;
+`;
+
+
 
 const ContentContainer = styled.div`
   max-width: 800px;
@@ -81,6 +115,7 @@ const BookStack = styled.img`
 
 const StartButton = styled.button`
   background: #00B2FF;
+  margin-top: 40px;
   color: white;
   border: none;
   padding: 16px 32px;
@@ -111,6 +146,8 @@ const Game: React.FC = () => {
 
   return (
     <GameContainer>
+      <GradientCircle />
+      <GradientCircleLeft />
       <Navigation />
       <ContentContainer>
         <ProgressSection>
