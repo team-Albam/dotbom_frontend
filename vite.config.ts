@@ -7,7 +7,7 @@ export default defineConfig({
     // vite.config.ts
     proxy: {
       "/api": {
-        target: "http://localhost:8080",
+        target: "http://52.79.76.2/",
         changeOrigin: true,
         // 👇 rewrite 제거하거나, 이렇게
         rewrite: (path) => path.replace(/^\/api/, "/api"),
